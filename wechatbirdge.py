@@ -19,8 +19,7 @@ def login():
 
 def sendr(sock,header,response=None):
     try:
-        sock.send(header.encode('utf-8'))
-        sock.send(response)
+        sock.send(header.encode('utf-8')+response)
         sock.close()
     except:
         ex
@@ -34,7 +33,7 @@ def api():
             global unread
             global switch
             soc, addr=So.accept()
-            data=soc.recv(1024)
+            data=soc.recv(2048)
             print('New API request!')
             msgs=data.split()
             print('Source:',msgs[1].decode('utf-8'))
@@ -75,9 +74,33 @@ def api():
                 sendr(soc,header,rpy.encode('utf-8'))
             elif source=='/send':
                 header='HTTP/1.1 200 OK\nContent-type: text/html; charset=utf-8\r\n\r\n'
-                datanew=data.decode('utf-8')
-                senddata=datanew.split('\r\n\r\n')
-                print('SENDDATA',senddata)
+                try:
+                    datanew=data.decode('utf-8')
+                    print('DATANEW',datanew)
+                    senddata=datanew.split('\r\n\r\n')
+                    print('SENDDATA',senddata[1])
+                    frd=senddata[1]
+                    frd=frd.split('$$')
+                    try:
+                        print(frd[0])
+                        friendobj=ensure_one(bot.friends().search(frd[0]))
+                        #bot.friends.search(frd[0]) 存在问题
+                    except:
+                        print('FRIEND_SEARCH_ERR')
+                        rpy='''无法找到指定好友或有多个重名好友'''
+                        sendr(soc,header,rpy.encode('utf-8'))
+                    try:
+                        friendobj.send(frd[1])
+                        rpy='''消息发送成功'''
+                        sendr(soc,header,rpy.encode('utf-8'))
+                        print('发送成功')
+                    except:
+                        rpy='''消息发送失败'''
+                        sendr(soc,header,rpy.encode('utf-8'))                       
+                except:
+                    rpy='''服务异常,请稍后再试'''
+                    sendr(soc,header,rpy.encode('utf-8'))                        
+                    print('ERR_SEND')
             else:
                 print('404')
                 header='HTTP/1.1 404 Not Found\nContent-type: text/html; charset=utf-8\r\n\r\n'
