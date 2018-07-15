@@ -1,24 +1,16 @@
 import os
 import json
-import requests
-print('WECHATMSG VER 2124 IMPORTED')
+print('ALIPROC VER 2124 IMPORTED')
 
 def getresult(requestraw):
     print(requestraw)
     jsonout=json.loads(requestraw)
     print('JSONOUT')
-    command={}
     #print(jsonout)
     for x in jsonout['slotEntities']:
         print(x['intentParameterName'],x['originalValue'])
-        command[x['intentParameterName']]=x['originalValue']
     print(jsonout['intentId'])
-    if 'com' in command:
-        if command['com']=='下一条' or command['com']=='继续':
-            print('继续')
-            return requests.get('localhost:8562/nextmsg').text
-    print(command)
-    return 
+    return 'Hi, intentid='+str(jsonout['intentId'])+' originalValue='+x['originalValue']
 
 def packresult(result,code=0,message=None,type='RESULT',askinfo=[],intentid=0,excode='SUCCESS'):
     #PACK RESULT
@@ -62,7 +54,7 @@ def proc(raw):
             for x in range(len(msgs)-1):
                 msgfinal=msgfinal+msgs[x+1]+'\n'
             print('MSGFINAL',msgfinal)
-            getresult(msgfinal)
+            print(packresult(getresult(msgfinal)))
             return packresult(getresult(msgfinal))
         return
     except:
