@@ -128,7 +128,7 @@ def send_response(header,filename,OpenMode='r',DirectContent=None):
         connectionSocket.close()
     except:
         try:
-            exccc()
+            #exccc()
             #404 with file
             print('404 NOT FOUND')
             header='\nHTTP/1.1 404 Not Found\r\n\r\n'
@@ -141,7 +141,7 @@ def send_response(header,filename,OpenMode='r',DirectContent=None):
                 connectionSocket.send(outputdata[i].encode('utf-8'))
             connectionSocket.close()
         except:
-            exccc()
+            #exccc()
             header='\nHTTP/1.1 404 Not Found\n\n'
             outputdata = '''<html>
 <body>
@@ -165,7 +165,7 @@ def getfilename(filename):
             if Result=='STOP':
                 return 'STOP'
         except:
-            exccc()
+            #exccc()
             print('Unable to callback:(Always_Callback) '+x)
     for x in Redirect:
         if filename==x:
@@ -202,7 +202,7 @@ while True:
     print('System Ready')
     connectionSocket, addr = serverSocket.accept()
     try:
-        message = connectionSocket.recv(1024)
+        message = connectionSocket.recv(2048)
         msgs=message.split()
         print(msgs[1].decode('utf-8'))
         if parse.unquote(msgs[1].decode('utf-8')) in PublicSite:
@@ -228,7 +228,7 @@ while True:
         if Trial==Maximum_Trial:
             _thread.start_new_thread(delay,())
     except Exception:
-        exccc()
+        #exccc()
         print('500 SERVER ERROR')
         header = '\nHTTP/1.1 500 Server Error\n\n'
         filename = Err500
