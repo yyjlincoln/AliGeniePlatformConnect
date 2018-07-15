@@ -1,9 +1,12 @@
 import os
 import json
 import requests
+import socket
 print('WECHATMSG VER 2124 IMPORTED')
+sendswitch=False
 
 def getresult(requestraw):
+    global sendswitch
     print(requestraw)
     jsonout=json.loads(requestraw)
     print('JSONOUT')
@@ -35,6 +38,25 @@ def getresult(requestraw):
                     return rst
             except:
                 return '微信登陆失效'
+        if command['com']=='发消息':
+            print('发消息')
+            try:
+                if sendswitch==False:
+                    sendswitch=True
+                else:
+                    sendswitch=False
+                    reqs=command['touser']+'$$'+command['msg']
+                    so=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+                    so.connect(('localhost',8562))
+                    sox='POST /send HTTP/1.1\r\n\r\n'+command['touser']+'$$'+command['msg']
+                    so.send(sox.encode('utf-8'))
+                    rst=str(so.recv(1024).decode('utf-8')).split('\r\n\r\n')
+                    print(rst[1])
+                    #print(rst)
+                    return rst[1]
+            except:
+                print('unable')
+                return '由于系统原因发送失败'
     print(command)
     return 
 
@@ -84,5 +106,5 @@ def proc(raw):
             return packresult(getresult(msgfinal))
         return
     except:
-        exccc()
+        #exccc()
         print('ERROR WHEN SPLITING RAW')
