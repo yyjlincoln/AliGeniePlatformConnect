@@ -8,6 +8,8 @@ import base64
 STATUS=False
 unread=[]
 switch=False
+msgsent=[]
+clearswitch=0
 
 def logout():
     STATUS=False
@@ -32,6 +34,7 @@ def api():
         try:
             global unread
             global switch
+            global clearswitch
             soc, addr=So.accept()
             data=soc.recv(2048)
             print('New API request!')
@@ -60,9 +63,9 @@ def api():
                     cont=''
                 print('CONT',cont)
                 sendr(soc,header,cont.encode('utf-8'))
-                if switch==False:
+                if switch==True:
                     switch=True
-                else:
+                else:#SWITCH CANCELLED
                     switch=False
                     unread.pop(0)
             elif source=='/count':
@@ -89,10 +92,24 @@ def api():
                         print('FRIEND_SEARCH_ERR')
                         rpy='''无法找到指定好友或有多个重名好友'''
                         sendr(soc,header,rpy.encode('utf-8'))
+                        continue
                     try:
-                        friendobj.send(frd[1])
+                        msgsent.append({'sent':friendobj.send(frd[1]),'timestamp':time.time()})
                         rpy='''消息发送成功'''
                         sendr(soc,header,rpy.encode('utf-8'))
+                        clearswitch=clearswitch+1
+                        popswitch=[]
+                        try:
+                            if clearswitch>=10:
+                                for x in range(len(msgsent)):
+                                    if int(msgsent[x]['timestamp'])-int(time.time())>=121:
+                                        popswitch.append(x)
+                                clearswitch=0
+                                for x in range(len(popswitch)):
+                                    print('deleted',msgsent[popswitch[-x]])
+                                    msgsent.pop(popswitch[-x])
+                        except:
+                            print('unable to delete sent msg.')
                         print('发送成功')
                     except:
                         rpy='''消息发送失败'''
@@ -101,6 +118,30 @@ def api():
                     rpy='''服务异常,请稍后再试'''
                     sendr(soc,header,rpy.encode('utf-8'))                        
                     print('ERR_SEND')
+            elif source=='/recall':
+                print('撤回消息')
+                header='HTTP/1.1 200 OK\nContent-type: text/html; charset=utf-8\r\n\r\n'
+                if int(msgsent[-1]['timestamp'])-int(time.time())>=120:
+                    print('超时')
+                    msgsent.clear()
+                    clearswitch=0
+                    rpy='消息超过两分钟,撤回超时'
+                    sendr(soc,header,rpy.encode('utf-8'))
+                if len(msgsent)==0:
+                    print('没有要撤回的消息')
+                    rpy='没有要撤回的消息'
+                    sendr(soc,header,rpy.encode('utf-8'))
+                else:
+                    try:
+                        msgsent[-1]['sent'].recall()
+                        msgsent.pop(-1)
+                        print('撤回成功')
+                        rpy='撤回成功'
+                        sendr(soc,header,rpy.encode('utf-8'))
+                    except:
+                        print('撤回失败')
+                        rpy='撤回失败'
+                        sendr(soc,header,rpy.encode('utf-8'))
             else:
                 print('404')
                 header='HTTP/1.1 404 Not Found\nContent-type: text/html; charset=utf-8\r\n\r\n'
